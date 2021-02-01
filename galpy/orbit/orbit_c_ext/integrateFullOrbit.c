@@ -52,6 +52,7 @@ void evalRectDeriv(double, double *, double *,
 void evalRectDeriv_dxdv(double,double *, double *,
 			      int, struct potentialArg *);
 void initMovingObjectSplines(struct potentialArg *, double ** pot_args);
+void initMovingObjectVelSplines(struct potentialArg *, double ** pot_args);
 void initChandrasekharDynamicalFrictionSplines(struct potentialArg *, double ** pot_args);
 /*
   Actual functions
@@ -458,6 +459,13 @@ void parse_leapFuncArgs_Full(int npot,
 					    + (int) (*(*pot_args+7) + 20)));
       potentialArgs->requiresVelocity= false;
       break;
+    case 38: //LMCDynamicalFrictionForce
+      potentialArgs->RforceVelocity= &LMCDynamicalFrictionForceRforce;
+      potentialArgs->zforceVelocity= &LMCDynamicalFrictionForcezforce;
+      potentialArgs->phiforceVelocity= &LMCDynamicalFrictionForcephiforce;
+      potentialArgs->nargs= (int) 3;
+      potentialArgs->requiresVelocity= true;
+      break;
 //////////////////////////////// WRAPPERS /////////////////////////////////////
     case -1: //DehnenSmoothWrapperPotential
       potentialArgs->potentialEval= &DehnenSmoothWrapperPotentialEval;
@@ -503,10 +511,26 @@ void parse_leapFuncArgs_Full(int npot,
       potentialArgs->nargs= (int) 16;
       potentialArgs->requiresVelocity= true;
       break;
-    }
+    case -8: //ReflexMotion
+      potentialArgs->Rforce= &ReflexMotionRforce;
+      potentialArgs->zforce= &ReflexMotionzforce;
+      potentialArgs->phiforce= &ReflexMotionphiforce;
+      potentialArgs->nargs= (int) 3;
+      potentialArgs->requiresVelocity= false;
+      break;
+   case -9: //MovingObjectDissipative
+      potentialArgs->RforceVelocity= &MovingObjectDissipativeRforce;
+      potentialArgs->zforceVelocity= &MovingObjectDissipativezforce;
+      potentialArgs->phiforceVelocity= &MovingObjectDissipativephiforce;
+      potentialArgs->nargs= (int) 3;
+      potentialArgs->requiresVelocity= true;
+      break;
+     }
     int setupMovingObjectSplines = *(*pot_type-1) == -6 ? 1 : 0;
     int setupChandrasekharDynamicalFrictionSplines = *(*pot_type-1) == -7 ? 1 : 0;
-    if ( *(*pot_type-1) < 0 ) { // Parse wrapped potential for wrappers
+    int setupReflexMotionSplines = *(*pot_type-1) == -8 ? 1 : 0;
+    int setupMovingObjectDissipativeSplines= *(*pot_type-1) == -9 ? 1 : 0;  
+     if ( *(*pot_type-1) < 0 ) { // Parse wrapped potential for wrappers
       potentialArgs->nwrapped= (int) *(*pot_args)++;
       potentialArgs->wrappedPotentialArg= \
 	(struct potentialArg *) malloc ( potentialArgs->nwrapped	\
@@ -516,6 +540,10 @@ void parse_leapFuncArgs_Full(int npot,
 			      pot_type,pot_args);
     }
     if (setupMovingObjectSplines)
+      initMovingObjectSplines(potentialArgs, pot_args);
+    if (setupMovingObjectDissipativeSplines)
+      initMovingObjectVelSplines(potentialArgs, pot_args);
+    if (setupReflexMotionSplines)
       initMovingObjectSplines(potentialArgs, pot_args);
     if (setupChandrasekharDynamicalFrictionSplines)
       initChandrasekharDynamicalFrictionSplines(potentialArgs,pot_args);
@@ -784,6 +812,71 @@ void initMovingObjectSplines(struct potentialArg * potentialArgs,
   *pot_args = *pot_args + (int) (1+4*nPts);
   free(t);
 }
+
+void initMovingObjectVelSplines(struct potentialArg * potentialArgs,
+			     double ** pot_args){
+  // Modified by Richard D'Souza - 18 Jan 2021
+  gsl_interp_accel *x_accel_ptr = gsl_interp_accel_alloc();
+  gsl_interp_accel *y_accel_ptr = gsl_interp_accel_alloc();
+  gsl_interp_accel *z_accel_ptr = gsl_interp_accel_alloc();
+  gsl_interp_accel *vx_accel_ptr = gsl_interp_accel_alloc();
+  gsl_interp_accel *vy_accel_ptr = gsl_interp_accel_alloc();
+  gsl_interp_accel *vz_accel_ptr = gsl_interp_accel_alloc();
+  int nPts = (int) **pot_args;
+
+  gsl_spline *x_spline = gsl_spline_alloc(gsl_interp_cspline, nPts);
+  gsl_spline *y_spline = gsl_spline_alloc(gsl_interp_cspline, nPts);
+  gsl_spline *z_spline = gsl_spline_alloc(gsl_interp_cspline, nPts);
+  gsl_spline *vx_spline = gsl_spline_alloc(gsl_interp_cspline, nPts);
+  gsl_spline *vy_spline = gsl_spline_alloc(gsl_interp_cspline, nPts);
+  gsl_spline *vz_spline = gsl_spline_alloc(gsl_interp_cspline, nPts);
+
+  double * t_arr = *pot_args+1;
+  double * x_arr = t_arr+1*nPts;
+  double * y_arr = t_arr+2*nPts;
+  double * z_arr = t_arr+3*nPts;
+  double * vx_arr = t_arr +4*nPts;
+  double * vy_arr = t_arr +5*nPts;
+  double * vz_arr = t_arr +6*nPts;
+
+
+  double * t= (double *) malloc ( nPts * sizeof (double) );
+  double tf = *(t_arr+7*nPts+2);
+  double to = *(t_arr+7*nPts+1);
+
+  int ii;
+  for (ii=0; ii < nPts; ii++)
+    *(t+ii) = (t_arr[ii]-to)/(tf-to);
+
+  gsl_spline_init(x_spline, t, x_arr, nPts);
+  gsl_spline_init(y_spline, t, y_arr, nPts);
+  gsl_spline_init(z_spline, t, z_arr, nPts);
+  gsl_spline_init(vx_spline, t, vx_arr, nPts);
+  gsl_spline_init(vy_spline, t, vy_arr, nPts);
+  gsl_spline_init(vz_spline, t, vz_arr, nPts);
+
+
+  potentialArgs->nspline1d= 6;
+  potentialArgs->spline1d= (gsl_spline **) malloc ( 6*sizeof ( gsl_spline *) );
+  potentialArgs->acc1d= (gsl_interp_accel **) \
+    malloc ( 6 * sizeof ( gsl_interp_accel * ) );
+  *potentialArgs->spline1d = x_spline;
+  *potentialArgs->acc1d = x_accel_ptr;
+  *(potentialArgs->spline1d+1)= y_spline;
+  *(potentialArgs->acc1d+1)= y_accel_ptr;
+  *(potentialArgs->spline1d+2)= z_spline;
+  *(potentialArgs->acc1d+2)= z_accel_ptr;
+  *(potentialArgs->spline1d+3)= vx_spline;
+  *(potentialArgs->acc1d+3)= vx_accel_ptr;
+  *(potentialArgs->spline1d+4)= vy_spline;
+  *(potentialArgs->acc1d+4)= vy_accel_ptr;
+  *(potentialArgs->spline1d+5)= vz_spline;
+  *(potentialArgs->acc1d+5)= vz_accel_ptr;
+
+  *pot_args = *pot_args + (int) (1+7*nPts);
+  free(t);
+}
+
 
 void initChandrasekharDynamicalFrictionSplines(struct potentialArg * potentialArgs,
 					       double ** pot_args){

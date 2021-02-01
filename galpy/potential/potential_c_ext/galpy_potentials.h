@@ -682,6 +682,13 @@ double MovingObjectPotentialPlanarRforce(double,double,double,
 					struct potentialArg *);
 double MovingObjectPotentialPlanarphiforce(double,double,double,
 					    struct potentialArg *);
+//ReflexMotionPotential
+double ReflexMotionRforce(double,double,double,double,
+					struct potentialArg *);
+double ReflexMotionphiforce(double,double,double,double,
+					struct potentialArg *);
+double ReflexMotionzforce(double,double,double,double,
+					struct potentialArg *);
 //ChandrasekharDynamicalFrictionForce, takes vR,vT,vZ
 double ChandrasekharDynamicalFrictionForceRforce(double,double,double,double,
 						 struct potentialArg *,
@@ -692,6 +699,26 @@ double ChandrasekharDynamicalFrictionForcephiforce(double,double,double,double,
 double ChandrasekharDynamicalFrictionForcezforce(double,double,double,double,
 						 struct potentialArg *,
 						 double,double,double);
+//LMCDynamicalFrictionForce, takes vR,vT,vZ
+double LMCDynamicalFrictionForceRforce(double,double,double,double,
+						 struct potentialArg *,
+						 double,double,double);
+double LMCDynamicalFrictionForcephiforce(double,double,double,double,
+						   struct potentialArg *,
+						   double,double,double);
+double LMCDynamicalFrictionForcezforce(double,double,double,double,
+						 struct potentialArg *,
+						 double,double,double);
+//MovingObjectDissipative
+double MovingObjectDissipativeRforce(double,double,double,double,
+					struct potentialArg *,
+					double,double,double);
+double MovingObjectDissipativephiforce(double,double,double,double,
+					    struct potentialArg *,
+					    double,double,double);
+double MovingObjectDissipativezforce(double,double,double,double,
+				        struct potentialArg *,
+					double,double,double);
 #ifdef __cplusplus
 }
 #endif

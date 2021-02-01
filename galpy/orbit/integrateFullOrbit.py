@@ -212,6 +212,9 @@ def _parse_pot(pot,potforactions=False,potfortorus=False):
             pot_args.extend([p._amp,p._rmin,p._rmax,p._total_mass,
                              p._Phi0,p._Phimax])
         # 37: TriaxialGaussianPotential, done with others above
+        elif isinstance(p,potential.LMCDynamicalFrictionForce):
+            pot_type.append(38)
+            pot_args.extend([p._amp,p._ms,p._gamma])
         ############################## WRAPPERS ###############################
         elif isinstance(p,potential.DehnenSmoothWrapperPotential):
             pot_type.append(-1)
@@ -284,6 +287,39 @@ def _parse_pot(pot,potforactions=False,potfortorus=False):
                              p._minr**2.])
             pot_args.extend([p._sigmar_rs_4interp[0],
                              p._sigmar_rs_4interp[-1]]) #r_0, r_f
+        elif isinstance(p,potential.ReflexMotion):
+            pot_type.append(-8)
+            wrap_npot, wrap_pot_type, wrap_pot_args= \
+                _parse_pot(p._pot,
+                           potforactions=potforactions,potfortorus=potfortorus)
+            pot_args.append(wrap_npot)
+            pot_type.extend(wrap_pot_type)
+            pot_args.extend(wrap_pot_args)
+            pot_args.extend([len(p._orb.t)])
+            pot_args.extend(p._orb.t)
+            pot_args.extend(p._orb.x(p._orb.t,use_physical=False))
+            pot_args.extend(p._orb.y(p._orb.t,use_physical=False))
+            pot_args.extend(p._orb.z(p._orb.t,use_physical=False))
+            pot_args.extend([p._amp])
+            pot_args.extend([p._orb.t[0],p._orb.t[-1]]) #t_0, t_f
+        elif isinstance(p,potential.MovingObjectDissipative):
+            pot_type.append(-9)
+            wrap_npot, wrap_pot_type, wrap_pot_args= \
+                _parse_pot(p._pot,
+                           potforactions=potforactions,potfortorus=potfortorus)
+            pot_args.append(wrap_npot)
+            pot_type.extend(wrap_pot_type)
+            pot_args.extend(wrap_pot_args)
+            pot_args.extend([len(p._orb.t)])
+            pot_args.extend(p._orb.t)
+            pot_args.extend(p._orb.x(p._orb.t,use_physical=False))
+            pot_args.extend(p._orb.y(p._orb.t,use_physical=False))
+            pot_args.extend(p._orb.z(p._orb.t,use_physical=False))
+            pot_args.extend(p._orb.vx(p._orb.t,use_physical=False))
+            pot_args.extend(p._orb.vy(p._orb.t,use_physical=False))
+            pot_args.extend(p._orb.vz(p._orb.t,use_physical=False))
+            pot_args.extend([p._amp])
+            pot_args.extend([p._orb.t[0],p._orb.t[-1]]) #t_0, t_f
     pot_type= numpy.array(pot_type,dtype=numpy.int32,order='C')
     pot_args= numpy.array(pot_args,dtype=numpy.float64,order='C')
     return (npot,pot_type,pot_args)

@@ -19,6 +19,8 @@ from . import DehnenBarPotential
 from . import SteadyLogSpiralPotential
 from . import TransientLogSpiralPotential
 from . import MovingObjectPotential
+from . import MovingObjectDissipative
+from . import ReflexMotion
 from . import EllipticalDiskPotential
 from . import CosmphiDiskPotential
 from . import RazorThinExponentialDiskPotential
@@ -42,6 +44,7 @@ from . import SolidBodyRotationWrapperPotential
 from . import CorotatingRotationWrapperPotential
 from . import GaussianAmplitudeWrapperPotential
 from . import ChandrasekharDynamicalFrictionForce
+from . import LMCDynamicalFrictionForce
 from . import SphericalShellPotential
 from . import RingPotential
 from . import PerfectEllipsoidPotential
@@ -142,6 +145,8 @@ DehnenBarPotential= DehnenBarPotential.DehnenBarPotential
 SteadyLogSpiralPotential= SteadyLogSpiralPotential.SteadyLogSpiralPotential
 TransientLogSpiralPotential= TransientLogSpiralPotential.TransientLogSpiralPotential
 MovingObjectPotential= MovingObjectPotential.MovingObjectPotential
+MovingObjectDissipative=MovingObjectDissipative.MovingObjectDissipative
+ReflexMotion=ReflexMotion.ReflexMotion
 EllipticalDiskPotential= EllipticalDiskPotential.EllipticalDiskPotential
 LopsidedDiskPotential= CosmphiDiskPotential.LopsidedDiskPotential
 CosmphiDiskPotential= CosmphiDiskPotential.CosmphiDiskPotential
@@ -166,6 +171,7 @@ DiskSCFPotential = DiskSCFPotential.DiskSCFPotential
 SpiralArmsPotential = SpiralArmsPotential.SpiralArmsPotential
 HenonHeilesPotential= HenonHeilesPotential.HenonHeilesPotential
 ChandrasekharDynamicalFrictionForce= ChandrasekharDynamicalFrictionForce.ChandrasekharDynamicalFrictionForce
+LMCDynamicalFrictionForce=LMCDynamicalFrictionForce.LMCDynamicalFrictionForce
 SphericalShellPotential= SphericalShellPotential.SphericalShellPotential
 RingPotential= RingPotential.RingPotential
 PerfectEllipsoidPotential= PerfectEllipsoidPotential.PerfectEllipsoidPotential
